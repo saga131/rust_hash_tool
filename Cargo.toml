@@ -1,0 +1,38 @@
+[package]
+name = "hash_enum_tool"
+version = "0.5.0"
+edition = "2021"
+
+[dependencies]
+eframe = "0.29.1"
+egui = "0.29.1"
+hex = "0.4.3"
+digest = "0.10"
+md-5 = "0.10"
+sha-1 = "0.10"
+sha2 = "0.10"
+sha3 = "0.10"
+sm3 = "0.4"
+ripemd = "0.1"
+whirlpool = "0.10"
+blake2 = "0.10"
+blake3 = "1.5"
+base64 = "0.22.1"
+md4 = "0.10.2"
+
+# 优化配置
+
+# 开发模式 (cargo run)
+# 优化依赖库的运行速度，解决 Debug 模式下 GUI 可能卡顿的问题
+[profile.dev]
+codegen-units = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
+# 发布模式 (cargo run --release)
+# 适当降低优化级别以加快编译速度
+[profile.release]
+lto = false        # 关闭链接时优化 (Link Time Optimization)，大幅加快编译
+codegen-units = 16 # 增加并行代码生成单元，加快编译
+strip = true       # 移除符号信息，减小文件体积

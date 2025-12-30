@@ -1,0 +1,9 @@
+D:\12_projects\00_rust_hash_tool\target\debug\deps\unicode_segmentation-661534dbae31b22d.d: C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\unicode-segmentation-1.12.0\src\lib.rs C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\unicode-segmentation-1.12.0\src\grapheme.rs C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\unicode-segmentation-1.12.0\src\sentence.rs C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\unicode-segmentation-1.12.0\src\word.rs C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\unicode-segmentation-1.12.0\src\tables.rs
+
+D:\12_projects\00_rust_hash_tool\target\debug\deps\libunicode_segmentation-661534dbae31b22d.rmeta: C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\unicode-segmentation-1.12.0\src\lib.rs C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\unicode-segmentation-1.12.0\src\grapheme.rs C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\unicode-segmentation-1.12.0\src\sentence.rs C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\unicode-segmentation-1.12.0\src\word.rs C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\unicode-segmentation-1.12.0\src\tables.rs
+
+C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\unicode-segmentation-1.12.0\src\lib.rs:
+C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\unicode-segmentation-1.12.0\src\grapheme.rs:
+C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\unicode-segmentation-1.12.0\src\sentence.rs:
+C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\unicode-segmentation-1.12.0\src\word.rs:
+C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\unicode-segmentation-1.12.0\src\tables.rs:

@@ -1,0 +1,10 @@
+D:\12_projects\00_rust_hash_tool\target\release\deps\owned_ttf_parser-e7f4b83d3c815b6d.d: C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\owned_ttf_parser-0.25.1\src\lib.rs C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\owned_ttf_parser-0.25.1\src\convert.rs C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\owned_ttf_parser-0.25.1\src\owned.rs C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\owned_ttf_parser-0.25.1\src\preparse.rs
+
+D:\12_projects\00_rust_hash_tool\target\release\deps\libowned_ttf_parser-e7f4b83d3c815b6d.rlib: C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\owned_ttf_parser-0.25.1\src\lib.rs C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\owned_ttf_parser-0.25.1\src\convert.rs C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\owned_ttf_parser-0.25.1\src\owned.rs C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\owned_ttf_parser-0.25.1\src\preparse.rs
+
+D:\12_projects\00_rust_hash_tool\target\release\deps\libowned_ttf_parser-e7f4b83d3c815b6d.rmeta: C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\owned_ttf_parser-0.25.1\src\lib.rs C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\owned_ttf_parser-0.25.1\src\convert.rs C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\owned_ttf_parser-0.25.1\src\owned.rs C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\owned_ttf_parser-0.25.1\src\preparse.rs
+
+C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\owned_ttf_parser-0.25.1\src\lib.rs:
+C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\owned_ttf_parser-0.25.1\src\convert.rs:
+C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\owned_ttf_parser-0.25.1\src\owned.rs:
+C:\Users\sage\.cargo\registry\src\mirrors.aliyun.com-0671735e7cc7f5e7\owned_ttf_parser-0.25.1\src\preparse.rs:
