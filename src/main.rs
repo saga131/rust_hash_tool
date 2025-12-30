@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // Hide console in release mode
+
 mod crypto;
 
 use eframe::egui;
@@ -16,9 +18,63 @@ fn main() -> eframe::Result<()> {
         Box::new(|cc| {
             // 设置字体以支持中文
             setup_custom_fonts(&cc.egui_ctx);
+            // 设置自定义样式
+            setup_custom_style(&cc.egui_ctx);
             Ok(Box::new(HashApp::default()))
         }),
     )
+}
+
+fn setup_custom_style(ctx: &egui::Context) {
+    let mut style = (*ctx.style()).clone();
+    
+    // 1. 字体与间距 - 更宽松的布局
+    style.spacing.item_spacing = egui::vec2(10.0, 10.0);
+    style.spacing.window_margin = egui::Margin::same(16.0);
+    style.spacing.button_padding = egui::vec2(16.0, 8.0); // 更大的按钮
+    style.spacing.indent = 20.0;
+    
+    // 2. 圆角 - 更圆润现代
+    style.visuals.widgets.noninteractive.rounding = egui::Rounding::same(8.0);
+    style.visuals.widgets.inactive.rounding = egui::Rounding::same(8.0);
+    style.visuals.widgets.hovered.rounding = egui::Rounding::same(8.0);
+    style.visuals.widgets.active.rounding = egui::Rounding::same(8.0);
+    style.visuals.widgets.open.rounding = egui::Rounding::same(8.0);
+    style.visuals.window_rounding = egui::Rounding::same(12.0);
+    style.visuals.menu_rounding = egui::Rounding::same(8.0);
+
+    // 3. 颜色主题 (Modern Dark / Cyberpunk Lite)
+    let mut visuals = egui::Visuals::dark();
+    
+    // 背景色 - 深蓝灰，更护眼且高级
+    visuals.panel_fill = egui::Color32::from_rgb(25, 25, 35); 
+    visuals.faint_bg_color = egui::Color32::from_rgb(35, 35, 48); 
+    
+    // 控件颜色
+    visuals.widgets.noninteractive.bg_fill = egui::Color32::from_rgb(30, 30, 42);
+    visuals.widgets.noninteractive.fg_stroke = egui::Stroke::new(1.0, egui::Color32::from_rgb(210, 210, 230)); 
+    
+    // 按钮/输入框默认状态 - 稍微亮一点
+    visuals.widgets.inactive.bg_fill = egui::Color32::from_rgb(45, 45, 60);
+    visuals.widgets.inactive.fg_stroke = egui::Stroke::new(1.0, egui::Color32::from_rgb(230, 230, 250));
+    
+    // 悬停状态 - 提亮 + 强调色描边
+    visuals.widgets.hovered.bg_fill = egui::Color32::from_rgb(60, 60, 80);
+    visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1.5, egui::Color32::from_rgb(120, 180, 255)); // 亮蓝色描边
+    
+    // 激活/点击状态
+    visuals.widgets.active.bg_fill = egui::Color32::from_rgb(80, 80, 110);
+    visuals.widgets.active.fg_stroke = egui::Stroke::new(2.0, egui::Color32::WHITE);
+    
+    // 选中文本/高亮 - 鲜艳的紫色/蓝色渐变感
+    visuals.selection.bg_fill = egui::Color32::from_rgb(100, 100, 220);
+    visuals.selection.stroke = egui::Stroke::new(1.0, egui::Color32::WHITE);
+    
+    // 极端对比度修正
+    visuals.extreme_bg_color = egui::Color32::from_rgb(20, 20, 30); // 输入框背景更深
+
+    style.visuals = visuals;
+    ctx.set_style(style);
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -57,6 +113,15 @@ struct HashApp {
     search_query: String,
     compare_target: String,
     auto_calculate: bool,
+    // 推算工具状态
+    inference_plaintext: String,
+    inference_target_hash: String,
+    inference_salt: String,
+    inference_results: Vec<String>,
+    inference_fuzzy: bool,
+    inference_brute_salt: bool,
+    inference_use_custom_dict: bool,
+    inference_custom_dict_path: String,
     // 自定义加密块
     custom_blocks: Vec<CustomBlock>,
     literal_input: String,
@@ -77,6 +142,14 @@ impl Default for HashApp {
             search_query: String::new(),
             compare_target: String::new(),
             auto_calculate: true,
+            inference_plaintext: String::new(),
+            inference_target_hash: String::new(),
+            inference_salt: String::new(),
+            inference_results: Vec::new(),
+            inference_fuzzy: false,
+            inference_brute_salt: false,
+            inference_use_custom_dict: false,
+            inference_custom_dict_path: String::new(),
             custom_blocks: vec![CustomBlock::Password, CustomBlock::Salt],
             literal_input: String::new(),
             nested_algo_selection: HashAlgorithm::Md5,
@@ -205,6 +278,27 @@ impl HashApp {
                                                 if ui.button("+P").on_hover_text("添加 Password").clicked() { inner.push(CustomBlock::Password); *changed = true; }
                                                 if ui.button("+S").on_hover_text("添加 Salt").clicked() { inner.push(CustomBlock::Salt); *changed = true; }
                                                 
+                                                // 新增：添加固定文本 (+T)
+                                                ui.menu_button("+T", |ui| {
+                                                    ui.set_min_width(150.0);
+                                                    let unique_id = ui.make_persistent_id(("popup_text_input", i, inner.as_ptr()));
+                                                    let mut text: String = ui.data(|d| d.get_temp(unique_id).unwrap_or_default());
+                                                    
+                                                    ui.label("输入固定文本:");
+                                                    let res = ui.text_edit_singleline(&mut text);
+                                                    
+                                                    if ui.button("确认添加").clicked() || (res.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter))) {
+                                                         if !text.is_empty() {
+                                                             inner.push(CustomBlock::Literal(text.clone()));
+                                                             *changed = true;
+                                                             ui.data_mut(|d| d.insert_temp(unique_id, String::new())); // Clear
+                                                             ui.close_menu();
+                                                         }
+                                                    } else {
+                                                         ui.data_mut(|d| d.insert_temp(unique_id, text)); // Save
+                                                    }
+                                                }).response.on_hover_text("添加固定文本 (Literal)");
+
                                                 egui::ComboBox::new(ui.make_persistent_id(("inner_algo", i)), "")
                                                     .selected_text("添加哈希")
                                                     .show_ui(ui, |ui| {
@@ -292,10 +386,12 @@ impl HashApp {
     }
 
     fn ui_encryption(&mut self, ui: &mut egui::Ui) {
-        ui.heading("哈希加密工具");
-        ui.separator();
+        egui::ScrollArea::vertical().show(ui, |ui| {
+            ui.set_min_width(ui.available_width());
+            ui.heading("哈希加密工具");
+            ui.separator();
 
-        let mut changed = false;
+            let mut changed = false;
 
         // 1. 公共输入区域 (Top)
         ui.group(|ui| {
@@ -498,26 +594,163 @@ impl HashApp {
             self.calculate();
         }
         
-        ui.with_layout(egui::Layout::bottom_up(egui::Align::RIGHT), |ui| {
-            ui.label("Powered by Rust & egui");
+            ui.add_space(20.0);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                ui.label("Powered by Rust & egui");
+            });
         });
     }
 
     fn ui_inference(&mut self, ui: &mut egui::Ui) {
-        ui.heading("算法推算工具");
-        ui.separator();
-        ui.label("此功能正在开发中...");
-        ui.add_space(10.0);
-        ui.label("思路：通过已知的明文和目标哈希值，遍历所有可能的算法和加盐组合进行碰撞。");
-        
-        ui.group(|ui| {
-            ui.label("已知明文:");
-            ui.text_edit_singleline(&mut String::new());
-            ui.label("目标哈希值:");
-            ui.text_edit_singleline(&mut String::new());
+        egui::ScrollArea::vertical().show(ui, |ui| {
+            ui.set_min_width(ui.available_width());
+            ui.heading("算法推算工具");
+            ui.separator();
+            ui.label("通过已知的明文和目标哈希值，自动碰撞出可能的算法和加盐模式。");
             ui.add_space(10.0);
-            if ui.button("开始推算").clicked() {
-                // TODO: 实现推算逻辑
+            
+            ui.group(|ui| {
+                ui.label("1. 已知明文 (Plaintext):");
+                ui.add(egui::TextEdit::singleline(&mut self.inference_plaintext).hint_text("例如: 123456").desired_width(f32::INFINITY));
+                
+                ui.add_space(5.0);
+                ui.label("2. 目标哈希值 (Target Hash):");
+                ui.add(egui::TextEdit::singleline(&mut self.inference_target_hash).hint_text("例如: e10adc3949ba59abbe56e057f20f883e").desired_width(f32::INFINITY));
+
+                ui.add_space(5.0);
+                ui.label("3. 猜测盐值 (Optional Salt):");
+                ui.add(egui::TextEdit::singleline(&mut self.inference_salt).hint_text("如果不确定，可留空").desired_width(f32::INFINITY));
+
+                ui.add_space(5.0);
+                ui.horizontal(|ui| {
+                    ui.checkbox(&mut self.inference_fuzzy, "模糊匹配 (包含关系)");
+                    ui.checkbox(&mut self.inference_brute_salt, "爆破常见盐值 (0-1000, admin...)");
+                });
+                
+                ui.horizontal(|ui| {
+                    ui.checkbox(&mut self.inference_use_custom_dict, "使用自定义字典 (txt)");
+                    if self.inference_use_custom_dict {
+                        ui.add(egui::TextEdit::singleline(&mut self.inference_custom_dict_path).hint_text("输入路径或拖入文件").desired_width(f32::INFINITY));
+                    }
+                });
+
+                // 简单的拖拽文件支持
+                if self.inference_use_custom_dict {
+                    let dropped_path = ui.ctx().input(|i| {
+                        if let Some(file) = i.raw.dropped_files.first() {
+                            if let Some(path) = &file.path {
+                                return Some(path.display().to_string());
+                            }
+                        }
+                        None
+                    });
+
+                    if let Some(path) = dropped_path {
+                        self.inference_custom_dict_path = path;
+                    }
+                }
+
+                ui.add_space(10.0);
+                if ui.button("🚀 开始碰撞分析").clicked() {
+                    self.inference_results.clear();
+                    if self.inference_plaintext.is_empty() || self.inference_target_hash.is_empty() {
+                        self.inference_results.push("❌ 请先输入明文和目标哈希值".to_string());
+                    } else {
+                        let target = self.inference_target_hash.trim().to_lowercase();
+                        let mut found = false;
+                        
+                        // 准备盐值列表
+                        let mut salts_to_try = vec![self.inference_salt.clone()];
+                        if self.inference_brute_salt {
+                            // 添加常见盐值
+                            let common_salts = ["", "123456", "password", "salt", "admin", "123", "1", "0", "test", "root"];
+                            for s in common_salts {
+                                salts_to_try.push(s.to_string());
+                            }
+                            // 添加数字盐值 0-1000
+                            for i in 0..=1000 {
+                                salts_to_try.push(i.to_string());
+                            }
+                        }
+
+                        // 加载自定义字典
+                        if self.inference_use_custom_dict && !self.inference_custom_dict_path.is_empty() {
+                            match std::fs::read_to_string(&self.inference_custom_dict_path) {
+                                Ok(content) => {
+                                    for line in content.lines() {
+                                        salts_to_try.push(line.trim().to_string());
+                                    }
+                                    self.inference_results.push(format!("📂 已加载自定义字典: {}", self.inference_custom_dict_path));
+                                }
+                                Err(e) => {
+                                    self.inference_results.push(format!("❌ 无法读取字典文件: {}", e));
+                                }
+                            }
+                        }
+
+                        // 去重
+                        salts_to_try.sort();
+                        salts_to_try.dedup();
+
+                        let total_salts = salts_to_try.len();
+                        let mut match_count = 0;
+
+                        for salt in salts_to_try {
+                            let candidates = calculate_complex_hashes(&self.inference_plaintext, &salt);
+                            
+                            for (label, hash) in candidates {
+                                let hash_lower = hash.to_lowercase();
+                                let is_match = if self.inference_fuzzy {
+                                    // 模糊匹配：目标包含哈希，或哈希包含目标
+                                    target.contains(&hash_lower) || hash_lower.contains(&target)
+                                } else {
+                                    // 精确匹配
+                                    hash_lower == target
+                                };
+
+                                if is_match {
+                                    let salt_info = if salt.is_empty() { "无盐".to_string() } else { format!("Salt='{}'", salt) };
+                                    self.inference_results.push(format!("✅ 匹配成功: [{}] ({}) -> {}", label, salt_info, hash));
+                                    found = true;
+                                    match_count += 1;
+                                    
+                                    // 限制显示数量，防止爆破出太多结果卡死
+                                    if match_count >= 50 {
+                                        self.inference_results.push("... 结果过多，已截断 ...".to_string());
+                                        break;
+                                    }
+                                }
+                            }
+                            if match_count >= 50 { break; }
+                        }
+
+                        if !found {
+                            self.inference_results.push("⚠️ 未找到匹配的算法模式".to_string());
+                            if !self.inference_brute_salt {
+                                self.inference_results.push("尝试勾选 '爆破常见盐值' 进行更深入的搜索。".to_string());
+                            }
+                        } else {
+                            self.inference_results.insert(0, format!("🔍 分析完成，共尝试 {} 个盐值，发现 {} 个匹配项。", total_salts, match_count));
+                        }
+                    }
+                }
+            });
+
+            ui.add_space(10.0);
+            if !self.inference_results.is_empty() {
+                ui.group(|ui| {
+                    ui.heading("分析结果:");
+                    ui.separator();
+                    for res in &self.inference_results {
+                        if res.starts_with("✅") {
+                            ui.label(egui::RichText::new(res).color(egui::Color32::GREEN).strong().size(16.0));
+                        } else if res.starts_with("❌") {
+                            ui.label(egui::RichText::new(res).color(egui::Color32::RED));
+                        } else {
+                            ui.label(res);
+                        }
+                    }
+                });
             }
         });
     }
@@ -564,13 +797,48 @@ impl eframe::App for HashApp {
                     ui.horizontal(|ui| {
                         ui.spacing_mut().item_spacing.x = 5.0;
                         ui.label("当前版本:");
-                        ui.label(egui::RichText::new("v0.5.0").color(egui::Color32::from_rgb(100, 200, 100)).strong());
+                        ui.label(egui::RichText::new("v0.7.2").color(egui::Color32::from_rgb(100, 200, 100)).strong());
                     });
 
                     ui.separator();
                     ui.collapsing("📢 更新日志", |ui| {
                         egui::ScrollArea::vertical().max_height(200.0).show(ui, |ui| {
                             ui.vertical(|ui| {
+                                ui.label(egui::RichText::new("v0.7.2").strong());
+                                ui.small("• 批量计算新增 SM3/RIPEMD/Whirlpool/SHA3/BLAKE 等算法");
+                                ui.add_space(2.0);
+
+                                ui.label(egui::RichText::new("v0.7.1").strong());
+                                ui.small("• 算法推算新增 '自定义字典' 爆破功能");
+                                ui.small("• 支持拖拽 txt 文件加载盐值字典");
+                                ui.add_space(2.0);
+
+                                ui.label(egui::RichText::new("v0.7.0 (2025-12-30)").strong());
+                                ui.small("• 算法推算新增 '模糊匹配' 模式");
+                                ui.small("• 算法推算新增 '爆破常见盐值' 功能");
+                                ui.small("• 优化推算结果展示，支持显示盐值信息");
+                                ui.add_space(2.0);
+
+                                ui.label(egui::RichText::new("v0.6.0").strong());
+                                ui.small("• 新增算法推算工具 (Inference Tool)");
+                                ui.small("• 支持通过明文和哈希值反推算法模式");
+                                ui.add_space(2.0);
+
+                                ui.label(egui::RichText::new("v0.5.3").strong());
+                                ui.small("• 新增哈希积木内添加固定文本 (+T) 功能");
+                                ui.small("• 优化滚动交互，提升多层滚动体验");
+                                ui.add_space(2.0);
+
+                                ui.label(egui::RichText::new("v0.5.2").strong());
+                                ui.small("• 增加全局滚动条，解决小屏幕显示不全问题");
+                                ui.small("• 优化底部布局，防止内容遮挡");
+                                ui.add_space(2.0);
+
+                                ui.label(egui::RichText::new("v0.5.1").strong());
+                                ui.small("• 全新 UI 主题：Modern Dark");
+                                ui.small("• 优化控件圆角与间距，视觉更年轻化");
+                                ui.add_space(2.0);
+
                                 ui.label(egui::RichText::new("v0.5.0").strong());
                                 ui.small("• 新增批量哈希结果的搜索过滤功能");
                                 ui.small("• 新增哈希值对比匹配功能 (高亮显示)");

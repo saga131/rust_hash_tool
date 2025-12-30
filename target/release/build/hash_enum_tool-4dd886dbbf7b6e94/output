@@ -1,0 +1,1 @@
+cargo:rustc-link-arg-bins=D:\12_projects\00_rust_hash_tool\target\release\build\hash_enum_tool-4dd886dbbf7b6e94\out/libicon.a

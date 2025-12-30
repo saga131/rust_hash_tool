@@ -239,6 +239,46 @@ pub fn calculate_complex_hashes(pass: &str, salt: &str) -> Vec<(String, String)>
         h.update(s);
         hex::encode(h.finalize())
     };
+    let sm3 = |s: &[u8]| -> String {
+        let mut h = Sm3::new();
+        h.update(s);
+        hex::encode(h.finalize())
+    };
+    let ripemd160 = |s: &[u8]| -> String {
+        let mut h = Ripemd160::new();
+        h.update(s);
+        hex::encode(h.finalize())
+    };
+    let whirlpool = |s: &[u8]| -> String {
+        let mut h = Whirlpool::new();
+        h.update(s);
+        hex::encode(h.finalize())
+    };
+    let blake2b = |s: &[u8]| -> String {
+        let mut h = Blake2b512::new();
+        h.update(s);
+        hex::encode(h.finalize())
+    };
+    let blake2s = |s: &[u8]| -> String {
+        let mut h = Blake2s256::new();
+        h.update(s);
+        hex::encode(h.finalize())
+    };
+    let blake3_fn = |s: &[u8]| -> String {
+        let mut h = blake3::Hasher::new();
+        h.update(s);
+        hex::encode(h.finalize().as_bytes())
+    };
+    let sha3_256 = |s: &[u8]| -> String {
+        let mut h = Sha3_256::new();
+        h.update(s);
+        hex::encode(h.finalize())
+    };
+    let sha3_512 = |s: &[u8]| -> String {
+        let mut h = Sha3_512::new();
+        h.update(s);
+        hex::encode(h.finalize())
+    };
 
     // 1. Base64
     results.push(("base64".to_string(), BASE64_STANDARD.encode(pass)));
@@ -316,6 +356,25 @@ pub fn calculate_complex_hashes(pass: &str, salt: &str) -> Vec<(String, String)>
     // 17. sha512
     results.push(("sha512".to_string(), sha512(pass.as_bytes())));
 
+    // 18. SM3 (Commercial Cryptography)
+    let sm3_pass = sm3(pass.as_bytes());
+    results.push(("sm3".to_string(), sm3_pass.clone()));
+
+    // 19. RIPEMD-160
+    results.push(("ripemd160".to_string(), ripemd160(pass.as_bytes())));
+
+    // 20. Whirlpool
+    results.push(("whirlpool".to_string(), whirlpool(pass.as_bytes())));
+
+    // 21. SHA3 Family
+    results.push(("sha3_256".to_string(), sha3_256(pass.as_bytes())));
+    results.push(("sha3_512".to_string(), sha3_512(pass.as_bytes())));
+
+    // 22. BLAKE Family
+    results.push(("blake2b".to_string(), blake2b(pass.as_bytes())));
+    results.push(("blake2s".to_string(), blake2s(pass.as_bytes())));
+    results.push(("blake3".to_string(), blake3_fn(pass.as_bytes())));
+
     // Salted variations
     // md5(md5($pass).$salt);VB;DZ -> md5(md5(pass) + salt)
     results.push(("md5(md5($pass).$salt)".to_string(), md5(format!("{}{}", md5_pass, salt).as_bytes())));
@@ -368,6 +427,15 @@ pub fn calculate_complex_hashes(pass: &str, salt: &str) -> Vec<(String, String)>
 
     // sha512($salt.$pass)
     results.push(("sha512($salt.$pass)".to_string(), sha512(format!("{}{}", salt, pass).as_bytes())));
+
+    // sm3($pass.$salt)
+    results.push(("sm3($pass.$salt)".to_string(), sm3(format!("{}{}", pass, salt).as_bytes())));
+
+    // sm3($salt.$pass)
+    results.push(("sm3($salt.$pass)".to_string(), sm3(format!("{}{}", salt, pass).as_bytes())));
+
+    // sm3($salt.$pass.$salt)
+    results.push(("sm3($salt.$pass.$salt)".to_string(), sm3(format!("{}{}{}", salt, pass, salt).as_bytes())));
 
     // MSSQL2015 (SHA2_512) - Assuming 0x0200 prefix + salt + hash
     // But without binary salt, we can't replicate exact MSSQL binary format.

@@ -1,0 +1,3 @@
+package.metadata does not exist
+cargo:rustc-link-search=native=D:\12_projects\00_rust_hash_tool\target\release\build\hash_enum_tool-d1e995c358fcbf66\out
+cargo:rustc-link-lib=static=resource
